@@ -120,7 +120,7 @@ label.chk{display:flex;gap:10px;align-items:center;font-size:15px;color:var(--in
 </style>
 </head>
 <body>
-<header><img id="hl" alt=""><h1>Excursión Yamagris RD.<small id="st">Sistema de reservas</small></h1><button class="btn sec" id="hb" onclick="hback()" style="display:none">← Inicio</button><button class="btn sec" id="lo" onclick="__logout()" style="display:none;margin-left:6px">Salir</button></header>
+<header><img id="hl" alt=""><h1>Excursión Yamagris RD.<small id="st" onclick="diag()" style="cursor:pointer">Sistema de reservas</small></h1><button class="btn sec" id="hb" onclick="hback()" style="display:none">← Inicio</button><button class="btn sec" id="lo" onclick="__logout()" style="display:none;margin-left:6px">Salir</button></header>
 <main id="app"><div class="empty">Cargando…</div></main>
 <div id="ver"></div>
 <div id="mo" class="mo" style="display:none" onclick="if(event.target===this)mo()"></div>
@@ -151,7 +151,12 @@ function upC(f,cid){var c=cid?cget(cid):null;
  if(!c){c={id:C.reduce(function(m,x){return Math.max(m,x.id)},0)+1};C.push(c)}
  c.name=f.name;c.phone=f.phone;c.minor=!!f.minor;c.tutor=f.minor?f.tutor:"";c.fare=f.minor?(f.fare||"nino"):"";return c.id}
 /* ---------- Base de datos compartida (db) ---------- */
-var GOTANY={r:0,c:0,e:0},LASTERR="",DB=null,RO=false,LAST={r:{},c:{},e:{}},SNAP={},Q={},LASTR=null;
+var GOTSRV={r:0,c:0,e:0},GOTANY={r:0,c:0,e:0},LASTERR="",DB=null,RO=false,LAST={r:{},c:{},e:{}},SNAP={},Q={},LASTR=null;
+function diag(){var y=function(k){return k?"sí":"no"};
+ mo('<h3 style="margin:0 0 8px">Diagnóstico de conexión</h3><div class="pl"><span>Versión</span><b>'+VERSION+'</b></div><div class="pl"><span>Proyecto Firebase</span><b>'+esc(window.__pid||"—")+'</b></div><div class="pl"><span>Cuenta</span><b>'+esc(window.__mail||"—")+'</b></div><div class="pl"><span>Internet del equipo</span><b>'+y(navigator.onLine)+'</b></div><div class="pl"><span>Base de datos conectada</span><b>'+y(DB)+'</b></div><div class="pl"><span>El servidor respondió (reservas, clientes, excursiones)</span><b>'+y(GOTSRV.r)+' · '+y(GOTSRV.c)+' · '+y(GOTSRV.e)+'</b></div><div class="pl"><span>Último error</span><b>'+esc(LASTERR||"ninguno")+'</b></div><p id="dg" style="margin:10px 0;font-weight:700"></p><button class="btn grn full" onclick="dtest()">Probar conexión con el servidor</button><button class="btn sec full" style="margin-top:8px" onclick="mo()">Cerrar</button>')}
+function dtest(){var o=document.getElementById("dg");o.style.color="var(--mut)";o.textContent="Probando…";if(!DB){o.textContent="No hay base de datos conectada en este equipo.";return}
+ var t0=Date.now(),to=new Promise(function(_,j){setTimeout(function(){j({code:"timeout"})},8000)});
+ Promise.race([DB.doc("config/ping").set({t:Date.now()}),to]).then(function(){o.style.color="var(--grn)";o.textContent="✅ Conexión correcta ("+(Date.now()-t0)+" ms). El servidor aceptó la escritura."}).catch(function(e){var c=e&&e.code;o.style.color="#c0392b";o.textContent="❌ "+({"timeout":"El servidor no respondió en 8 segundos (internet, bloqueador de anuncios o red).","permission-denied":"El servidor respondió, pero las reglas no permiten escribir con esta cuenta.","not-found":"No se encontró la base de datos (default) en el proyecto."}[c]||"Error de conexión.")+"  ["+(c||String(e))+"]"})}
 function setSt(t){var e=document.getElementById("st");if(e)e.textContent=t}
 function jn(v){if(v&&typeof v=="object"){if(Array.isArray(v))return "["+v.map(jn).join(",")+"]";return "{"+Object.keys(v).filter(function(k){return v[k]!==undefined}).sort().map(function(k){return JSON.stringify(k)+":"+jn(v[k])}).join(",")+"}"}return JSON.stringify(v)}
 function arrOf(k){return k=="r"?D:k=="c"?C:E}
@@ -176,7 +181,7 @@ function boot(){load();var L={D:D,C:C,E:E},has=D.length+C.length+E.length>0;view
   DB=db;D=[];C=[];E=[];attach(L,has,t);
   
  }).catch(function(){clearTimeout(t);setSt("Sin nube: datos solo en este dispositivo");go("list")})}
-function attach(L,has,t){var got={r:0,c:0,e:0};
+function attach(L,has,t){var got=GOTSRV;
  function done(){if(got.r&&got.c&&got.e&&view=="loading"){clearTimeout(t);var imp=false;try{imp=!localStorage.getItem("yamagris_imported")}catch(e){}
   if(has&&imp&&!D.length&&!C.length&&!E.length)askImport(L);else{setSt("☁️ En la nube");go("list")}}}
  ["r","c","e"].forEach(function(k){DB.collection(colOf(k)).onSnapshot(function(sn){SNAP[k]=sn;applySnap(k,sn);GOTANY[k]=1;if(!got[k]&&!sn.metadata.fromCache){got[k]=1;if(view=="loading")done();else if(got.r&&got.c&&got.e)setSt("☁️ En la nube")}if(got[k])soft()},function(er){werr(er)})});
@@ -507,7 +512,7 @@ function waTxt(id){var r=get(id),c=cu(r),rc=r.rcur||c,x=rt(r);function m(n){retu
  var ph=(r.phone||"").replace(/\D/g,"");if(ph.length==10)ph="1"+ph;
  window.open("https://wa.me/"+ph+"?text="+encodeURIComponent(t),"_blank")}
 document.getElementById("hl").src=LOGO;
-var VERSION="1.1";document.getElementById("ver").textContent="v"+VERSION;
+var VERSION="1.2";document.getElementById("ver").textContent="v"+VERSION;
 function showWelcome(){document.querySelector("header").style.display="none";document.getElementById("app").innerHTML='<div class="welcome"><img src="logo.webp" alt="Excursión Yamagris RD."><h1>Bienvenidos a su gestor de clientes</h1><p>Reservas, excursiones, abonos y recibos de Excursión Yamagris RD., todo en un solo lugar.</p><button class="btn grn full" onclick="showLogin()">Iniciar sesión</button></div>'}
 function showLogin(msg){document.querySelector("header").style.display="";document.getElementById("hb").style.display="none";document.getElementById("lo").style.display="none";setSt("Sistema de reservas");
  document.getElementById("app").innerHTML='<div class="card" style="max-width:380px;margin:30px auto"><h3 style="margin:0 0 6px">Iniciar sesión</h3><label>Usuario</label><input id="lm" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"><label>Contraseña</label><input id="lp" type="password" autocomplete="current-password" onkeydown="if(event.key==\'Enter\')doLogin()"><p id="le" style="color:#c0392b;margin:8px 0 0">'+(msg||"")+'</p><button class="btn grn full" style="margin-top:12px" onclick="doLogin()">Entrar</button><button class="btn sec full" style="margin-top:8px" onclick="showWelcome()">Volver</button></div>'}
@@ -529,9 +534,10 @@ if(!firebaseConfig.apiKey||String(firebaseConfig.apiKey).startsWith("PEGA")){
   const fdb=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()}),experimentalAutoDetectLongPolling:true});
   const auth=getAuth(app);
   window.__db={
-    collection:p=>({onSnapshot:(f,e)=>onSnapshot(collection(fdb,p),s=>f({docs:s.docs.map(d=>({id:d.id,exists:true,data:()=>d.data()})),metadata:s.metadata}),e)}),
+    collection:p=>({onSnapshot:(f,e)=>onSnapshot(collection(fdb,p),{includeMetadataChanges:true},s=>f({docs:s.docs.map(d=>({id:d.id,exists:true,data:()=>d.data()})),metadata:s.metadata}),e)}),
     doc:path=>({set:d=>setDoc(doc(fdb,path),d),delete:()=>deleteDoc(doc(fdb,path)),onSnapshot:(f,e)=>onSnapshot(doc(fdb,path),s=>f({exists:s.exists(),data:()=>s.data()}),e)})
   };
+  window.__pid=firebaseConfig.projectId;
   window.__login=(em,pw)=>signInWithEmailAndPassword(auth,em,pw);
   window.__logout=()=>signOut(auth).then(()=>location.reload());
   let started=false;
