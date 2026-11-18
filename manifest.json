@@ -1,0 +1,31 @@
+{
+  "name": "Excursión Yamagris RD. – Reservas",
+  "short_name": "Yamagris",
+  "description": "Gestor de clientes y reservas de Excursión Yamagris RD.",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a3d8a",
+  "theme_color": "#0a3d8a",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
